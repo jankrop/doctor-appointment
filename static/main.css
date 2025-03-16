@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+body {
+    background-color: #f0f0f0;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Lato", sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+}
+
+button {
+    border: none;
+    background-color: #0af;
+    padding: 5px 10px;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+button:hover {
+    background-color: #09e;
+}
+
+dialog {
+    border: none;
+    border-radius: 5px;
+    padding: 0;
+    width: 100%;
+    max-width: 600px;
+    background-color: white;
+}
+
+dialog header {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ccc;
+}
+
+dialog header button {
+    background-color: transparent !important;
+    color: #666;
+    padding: 0 5px;
+    font-size: 1.5rem;
+}
+
+dialog header button:hover {
+    color: black;
+}
+
+dialog main {
+    padding: 10px;
+}
+
+::backdrop {
+    background-color: black;
+    opacity: 0.5;
+}
+
+body > header, body > main, footer {
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+    padding: 10px 20px;
+}
+
+body > header {
+    background-color: #0af;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    flex: 1;
+}
+
+body > main {
+    background-color: white;
+    margin: auto;
+    padding: 20px;
+    flex: 1;
+}
+
+.doctor {
+    padding: 10px;
+    box-shadow: 0 4px 10px #ccc;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 600px;
+    margin: auto;
+}
+
+.doctor .name {
+    flex: 1;
+}
+
+.doctor p {
+    color: #666;
+}
+
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 1px;
+    padding: 1px;
+    background-color: #ccc;
+    margin: auto;
+    max-width: 600px;
+}
+
+.calendar > div {
+    background-color: white;
+    padding: 5px;
+}
+
+.calendar > div:not(:last-child) {
+    border-right: none;
+}
+
+.calendar .weekday {
+    text-align: center;
+}
+
+.calendar .day {
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.calendar .day span {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.calendar .day.disabled {
+    background-color: #eee;
+}
+
+.calendar .day.today span {
+    border: 2px solid #0af;
+}
+
+.calendar .day:not(.disabled):not(.selected):hover span {
+    background-color: #ddd;
+}
+
+.calendar .day.selected span {
+    color: white;
+    background-color: #0af;
+}
+
+footer {
+    background-color: #ddd;
+}

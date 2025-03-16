@@ -1,0 +1,92 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'main.css' %}">
+    <title>Title</title>
+</head>
+<body>
+    <header>
+        <h1>Przystojni lekarze w twojej okolicy</h1>
+        <p>Witaj, Jan</p>
+        <button>Wyloguj się</button>
+    </header>
+    <main>
+        <div id="doctor-list">
+            Ładowanie...
+        </div>
+        <br>
+        <div class="calendar">
+            <div class="weekday">Pn</div>
+            <div class="weekday">Wt</div>
+            <div class="weekday">Śr</div>
+            <div class="weekday">Cz</div>
+            <div class="weekday">Pt</div>
+            <div class="weekday">Sb</div>
+            <div class="weekday">Nd</div>
+
+            <div class="day disabled"><span>1</span></div>
+            <div class="day disabled"><span>2</span></div>
+            <div class="day disabled"><span>3</span></div>
+            <div class="day today"><span>4</span></div>
+            <div class="day"><span>5</span></div>
+            <div class="day selected"><span>6</span></div>
+            <div class="day"><span>7</span></div>
+        </div>
+    </main>
+    <footer>
+        2025 Jan Kropiwnicki
+    </footer>
+
+    <dialog>
+        <header>
+            <h3></h3>
+            <button>&times;</button>
+        </header>
+        <main>
+
+        </main>
+    </dialog>
+
+    <script>
+        const dialog = document.querySelector('dialog');
+        const dialogCloseButton = document.querySelector('dialog header button');
+        const dialogTitle = document.querySelector('dialog header h3');
+        const dialogMain = document.querySelector('dialog main');
+
+        const doctorListDiv = document.getElementById('doctor-list');
+
+        dialogCloseButton.onclick = () => dialog.close();
+
+        function createCalendar(dates) {
+            const now = new Date();
+        }
+
+        function openAppointmentModal(id) {
+            fetch(`/api/lekarz/${id}/`)
+                .then(response => response.json())
+                .then(data => {
+                    dialogTitle.textContent = data.imie + ' ' + data.nazwisko;
+                    dialogMain.innerHTML = new Date(data.dates[0]);
+                });
+
+            dialog.showModal();
+        }
+
+        fetch('/api/lekarz/')
+            .then(response => response.json())
+            .then(data => doctorListDiv.innerHTML = data.map(d => `
+                <div class="doctor">
+                    <div class="name">
+                        <h3>${d.imie} ${d.nazwisko}</h3>
+                        <p>${d.specjalizacja}</p>
+                    </div>
+                    <p>Dostępny w piątek</p>
+                    <button onclick="openAppointmentModal(${d.id})">Umów wizytę</button>
+                </div>
+            `).join(''));
+    </script>
+</body>
+</html>

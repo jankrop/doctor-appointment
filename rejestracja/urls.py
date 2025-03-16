@@ -1,8 +1,14 @@
 from django.urls import path
+from rest_framework import routers
 
-from .views import LekarzView, WizytaView
+from .views import LekarzViewSet, WizytaViewSet
+
+router = routers.DefaultRouter()
+router.register(r'wizyta', WizytaViewSet, 'wizyta')
+router.register(r'lekarz', LekarzViewSet, 'lekarz')
 
 urlpatterns = [
-    path('lekarz/', LekarzView.as_view()),
-    path('wizyta/', WizytaView.as_view()),
-]
+
+] + router.urls
+
+print(urlpatterns)

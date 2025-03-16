@@ -4,9 +4,14 @@ from rest_framework.validators import UniqueTogetherValidator
 from .models import Lekarz, Pacjent, Wizyta
 
 class LekarzSerializer(serializers.ModelSerializer):
+    dates = serializers.SerializerMethodField()
+
     class Meta:
         model = Lekarz
         fields = '__all__'
+
+    def get_dates(self, obj):
+        return obj.wizyta_set.values_list('data_wizyty', flat=True)
 
 class PacjentSerializer(serializers.ModelSerializer):
     class Meta:
