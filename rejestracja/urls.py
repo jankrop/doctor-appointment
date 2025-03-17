@@ -10,5 +10,3 @@ router.register(r'lekarz', LekarzViewSet, 'lekarz')
 urlpatterns = [
 
 ] + router.urls
-
-print(urlpatterns)

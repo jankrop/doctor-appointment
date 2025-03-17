@@ -22,6 +22,7 @@ class WizytaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wizyta
         fields = '__all__'
+        read_only_fields = ('pacjent', 'status')
         validators = [
             UniqueTogetherValidator(
                 queryset=Wizyta.objects.all(),

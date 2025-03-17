@@ -5,6 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{% static 'main.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pl.js"></script>
     <title>Title</title>
 </head>
 <body>
@@ -19,49 +22,75 @@
         </div>
         <br>
         <div class="calendar">
-            <div class="weekday">Pn</div>
-            <div class="weekday">Wt</div>
-            <div class="weekday">Śr</div>
-            <div class="weekday">Cz</div>
-            <div class="weekday">Pt</div>
-            <div class="weekday">Sb</div>
-            <div class="weekday">Nd</div>
-
-            <div class="day disabled"><span>1</span></div>
-            <div class="day disabled"><span>2</span></div>
-            <div class="day disabled"><span>3</span></div>
-            <div class="day today"><span>4</span></div>
-            <div class="day"><span>5</span></div>
-            <div class="day selected"><span>6</span></div>
-            <div class="day"><span>7</span></div>
         </div>
     </main>
     <footer>
         2025 Jan Kropiwnicki
     </footer>
 
-    <dialog>
-        <header>
-            <h3></h3>
-            <button>&times;</button>
-        </header>
-        <main>
+    <div id="dialog">
+        <div class="body">
+            <header>
+                <h3></h3>
+                <button>&times;</button>
+            </header>
+            <main>
 
-        </main>
-    </dialog>
+            </main>
+        </div>
+    </div>
 
     <script>
-        const dialog = document.querySelector('dialog');
-        const dialogCloseButton = document.querySelector('dialog header button');
-        const dialogTitle = document.querySelector('dialog header h3');
-        const dialogMain = document.querySelector('dialog main');
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Check if this cookie string begins with the name we want
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const dialog = document.querySelector('#dialog');
+        const dialogCloseButton = document.querySelector('#dialog header button');
+        const dialogTitle = document.querySelector('#dialog header h3');
+        const dialogMain = document.querySelector('#dialog main');
+
+        flatpickr('.calendar', {
+            locale: 'pl',
+            dateFormat: 'd.m.Y',
+        });
 
         const doctorListDiv = document.getElementById('doctor-list');
 
-        dialogCloseButton.onclick = () => dialog.close();
+        dialogCloseButton.onclick = () => dialog.classList.remove('shown');
 
-        function createCalendar(dates) {
-            const now = new Date();
+        function hourToFloat(hour) {
+            return parseInt(hour.split(':')[0]) + hour.split(':')[1] / 60;
+        }
+
+        function floatToHour(hour) {
+            return hour.toFixed(2).split('.')[0] + ':' + Math.round(hour.toFixed(2).split('.')[1] * 0.6).toString().padStart(2, '0');
+        }
+
+        function getHoursForDay(appointments, hourFrom, hourTo, day) {
+            const hours = [];
+            const appointmentsToday = appointments
+                .filter(a => a.split('T')[0] === day.split('T')[0])
+                .map(a => hourToFloat(a.split('T')[1]));
+            for (let i = hourToFloat(hourFrom); i < hourToFloat(hourTo); i += 0.25) {
+                if (new Date(day.split('T')[0]).getDate() === 28) {
+                    console.log(i, appointmentsToday);
+                }
+                hours.push({hour: floatToHour(i), busy: appointmentsToday.includes(i)});
+            }
+            return hours;
         }
 
         function openAppointmentModal(id) {
@@ -69,10 +98,70 @@
                 .then(response => response.json())
                 .then(data => {
                     dialogTitle.textContent = data.imie + ' ' + data.nazwisko;
-                    dialogMain.innerHTML = new Date(data.dates[0]);
+                    dialogMain.innerHTML = `
+                        <div class="appointment-form">
+                            <label for="calendar">Data</label>
+                            <label for="time-select">Godzina</label>
+                            <div></div>
+
+                            <input id="calendar">
+                            <select id="time-select">
+                                <option selected>--:--</option>
+                            </select>
+                            <button onclick="submitAppointment(${data.id})">Umów wizytę</button>
+                        </div>
+                    `;
+
+                    const calendar = document.querySelector('#calendar');
+                    const timeSelect = document.querySelector('#time-select');
+
+                    flatpickr(calendar, {
+                        locale: 'pl',
+                        altInput: true,
+                        altFormat: 'j M Y',
+                        disable: [
+                            date => {
+                                const todayMidnight = new Date();
+                                todayMidnight.setHours(0, 0, 0, 0);
+                                const is_weekend = date.getDay() === 0 || date.getDay() === 6;
+                                const is_past = date.getTime() < todayMidnight.getTime();
+                                date.setMonth(date.getMonth(), date.getDate() + 1)
+                                const is_busy = !getHoursForDay(data.dates, data.godzina_od, data.godzina_do, date.toISOString())
+                                return is_weekend || is_past || is_busy;
+                            }
+                        ]
+                    })
+
+                    calendar.onchange = () => {
+                        console.log(data.dates);
+                        const date = calendar.value;
+                        const hours = getHoursForDay(data.dates, data.godzina_od, data.godzina_do, date);
+                        console.log(hours);
+                        timeSelect.innerHTML = hours.map(h => `<option ${h.busy ? 'disabled' : ''}>${h.hour}</option>`).join('');
+                    }
                 });
 
-            dialog.showModal();
+            dialog.classList.add('shown');
+        }
+
+        function submitAppointment(doctorId) {
+            const calendar = document.querySelector('#calendar');
+            const timeSelect = document.querySelector('#time-select');
+            const date = calendar.value;
+            const hour = timeSelect.value;
+
+            fetch('/api/wizyta/', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    lekarz: doctorId,
+                    data_wizyty: date + 'T' + hour.padStart(5, '0') + ':00',
+                })
+            })
         }
 
         fetch('/api/lekarz/')
@@ -88,5 +177,7 @@
                 </div>
             `).join(''));
     </script>
+
+<!-- {% csrf_token %}-->
 </body>
 </html>

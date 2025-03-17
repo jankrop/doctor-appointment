@@ -28,6 +28,9 @@ class WizytaViewSet(
     serializer_class = WizytaSerializer
     permission_classes = IsPacjent, permissions.IsAuthenticated
 
+    def perform_create(self, serializer):
+        serializer.save(pacjent=self.request.user.pacjent)
+
     def destroy(self, request, *args, **kwargs):
         wizyta = self.get_object()
         wizyta.status = 1  # Update status to 'odwołana'

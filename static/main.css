@@ -26,7 +26,28 @@ button:hover {
     background-color: #09e;
 }
 
-dialog {
+input, select {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+#dialog {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0008;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+#dialog .body {
     border: none;
     border-radius: 5px;
     padding: 0;
@@ -35,7 +56,11 @@ dialog {
     background-color: white;
 }
 
-dialog header {
+#dialog.shown {
+    display: flex;
+}
+
+#dialog header {
     padding: 10px;
     display: flex;
     align-items: center;
@@ -43,19 +68,25 @@ dialog header {
     border-bottom: 1px solid #ccc;
 }
 
-dialog header button {
+#dialog header button {
     background-color: transparent !important;
     color: #666;
     padding: 0 5px;
     font-size: 1.5rem;
 }
 
-dialog header button:hover {
+#dialog header button:hover {
     color: black;
 }
 
-dialog main {
+#dialog main {
     padding: 10px;
+}
+
+#dialog .appointment-form {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 10px;
 }
 
 ::backdrop {
@@ -109,61 +140,9 @@ body > main {
     color: #666;
 }
 
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-gap: 1px;
-    padding: 1px;
-    background-color: #ccc;
-    margin: auto;
-    max-width: 600px;
-}
-
-.calendar > div {
-    background-color: white;
-    padding: 5px;
-}
-
-.calendar > div:not(:last-child) {
-    border-right: none;
-}
-
-.calendar .weekday {
-    text-align: center;
-}
-
-.calendar .day {
-    height: 50px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-}
-
-.calendar .day span {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.8rem;
-}
-
-.calendar .day.disabled {
-    background-color: #eee;
-}
-
-.calendar .day.today span {
-    border: 2px solid #0af;
-}
-
-.calendar .day:not(.disabled):not(.selected):hover span {
-    background-color: #ddd;
-}
-
-.calendar .day.selected span {
-    color: white;
-    background-color: #0af;
+.flatpickr-day.selected {
+    background-color: #0af !important;
+    border-color: #0af !important;
 }
 
 footer {

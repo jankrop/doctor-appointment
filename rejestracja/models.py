@@ -5,6 +5,8 @@ class Lekarz(models.Model):
     imie = models.CharField(max_length=50)
     nazwisko = models.CharField(max_length=50)
     specjalizacja = models.CharField(max_length=100)
+    godzina_od = models.TimeField()
+    godzina_do = models.TimeField()
 
     def __str__(self):
         return f'Lekarz: {self.imie} {self.nazwisko}'
