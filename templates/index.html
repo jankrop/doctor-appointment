@@ -14,7 +14,10 @@
     <header>
         <h1>Przystojni lekarze w twojej okolicy</h1>
         <p>Witaj, Jan</p>
-        <button>Wyloguj się</button>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button>Wyloguj się</button>
+        </form>
     </header>
     <main>
         <div id="doctor-list">
@@ -80,11 +83,20 @@
         }
 
         function getHoursForDay(appointments, hourFrom, hourTo, day) {
+            hourFrom = hourToFloat(hourFrom);
+
+            if (day.split('T')[0] === new Date().toISOString().split('T')[0]) {
+                hourFrom = new Date().getHours() +  new Date().getMinutes() / 60;
+                hourFrom = Math.ceil(hourFrom * 4) / 4
+            }
+
+            hourTo = hourToFloat(hourTo);
+
             const hours = [];
             const appointmentsToday = appointments
                 .filter(a => a.split('T')[0] === day.split('T')[0])
                 .map(a => hourToFloat(a.split('T')[1]));
-            for (let i = hourToFloat(hourFrom); i < hourToFloat(hourTo); i += 0.25) {
+            for (let i = hourFrom; i < hourTo; i += 0.25) {
                 if (new Date(day.split('T')[0]).getDate() === 28) {
                     console.log(i, appointmentsToday);
                 }
@@ -162,6 +174,7 @@
                     data_wizyty: date + 'T' + hour.padStart(5, '0') + ':00',
                 })
             })
+                .then(() => dialog.classList.remove('shown'))
         }
 
         fetch('/api/lekarz/')
