@@ -1,18 +1,4 @@
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Check if this cookie string begins with the name we want
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
+import { Lekarz, Wizyta } from "./api.js";
 
 function hourToFloat(hour) {
     return parseInt(hour.split(':')[0]) + hour.split(':')[1] / 60;
@@ -45,12 +31,28 @@ function getHoursForDay(appointments, hourFrom, hourTo, day) {
     return hours;
 }
 
+function getRelativeDate(date) {
+    if (date.split('T')[0] === new Date().toISOString().split('T')[0]) {
+        return 'dzisiaj'
+    }
+
+    date = new Date(date);
+    date.setDate(date.getDate() - 1)
+    if (date.toISOString().split('T')[0] === new Date().toISOString().split('T')[0]) {
+        return 'jutro'
+    }
+
+    date.setDate(date.getDate() + 1)
+    return date.getDate().toString().padStart(2, '0') + '.' + date.getMonth().toString().padStart(2, '0')
+}
+
 const dialog = document.querySelector('#dialog');
 const dialogCloseButton = document.querySelector('#dialog header button');
 const dialogTitle = document.querySelector('#dialog header h3');
 const dialogMain = document.querySelector('#dialog main');
 
 const doctorListDiv = document.querySelector('#doctor-list');
+const appointmentListDiv = document.querySelector('#appointment-list');
 
 dialogCloseButton.onclick = () => dialog.classList.remove('shown');
 
@@ -84,61 +86,77 @@ function setupCalendar(data) {
     }
 }
 
-function openAppointmentModal(id) {
-    fetch(`/api/lekarz/${id}/`)
-        .then(response => response.json())
-        .then(data => {
-            dialogTitle.textContent = data.imie + ' ' + data.nazwisko;
-            dialogMain.innerHTML = `
-                <div class="appointment-form">
-                    <label for="calendar">Data</label>
-                    <label for="time-select">Godzina</label>
-                    <div></div>
+async function openAppointmentModal(id) {
+    const appointment = await Wizyta.retrieve(id)
+    dialogTitle.textContent = appointment.imie + ' ' + appointment.nazwisko
+    dialogMain.innerHTML = `
+        <div class="appointment-form">
+            <label for="calendar">Data</label>
+            <label for="time-select">Godzina</label>
+            <div></div>
 
-                    <input id="calendar">
-                    <select id="time-select">
-                        <option selected>--:--</option>
-                    </select>
-                    <button onclick="submitAppointment(${data.id})">Umów wizytę</button>
-                </div>
-            `;
+            <input id="calendar">
+            <select id="time-select">
+                <option selected>--:--</option>
+            </select>
+            <button onclick="await submitAppointment(${data.id})">Umów wizytę</button>
+        </div>
+    `
 
-            setupCalendar(data);
-        });
+    setupCalendar(appointment);
 
     dialog.classList.add('shown');
 }
 
-function submitAppointment(doctorId) {
+async function submitAppointment(doctorId) {
     const calendar = document.querySelector('#calendar');
     const timeSelect = document.querySelector('#time-select');
     const date = calendar.value;
     const hour = timeSelect.value;
 
-    fetch('/api/wizyta/', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            lekarz: doctorId,
-            data_wizyty: date + 'T' + hour.padStart(5, '0') + ':00',
-        })
-    })
-        .then(() => dialog.classList.remove('shown'))
+    await Wizyta.create(doctorId, date + 'T' + hour.padStart(5, '0') + ':00')
+
+    await displayAppointments()
 }
 
-fetch('/api/lekarz/')
-    .then(response => response.json())
-    .then(data => doctorListDiv.innerHTML = data.map(d => `
-        <div class="doctor">
-            <div class="name">
-                <h3>${d.imie} ${d.nazwisko}</h3>
-                <p>${d.specjalizacja}</p>
+async function displayAppointments() {
+    const data = await Wizyta.list()
+
+    appointmentListDiv.innerHTML = data
+        .sort((a, b) => new Date(a.data_wizyty) - new Date(b.data_wizyty))
+        .map(d => `
+            <div class="appointment">
+                <div class="date">
+                    <h4>${d.data_wizyty.split('T')[1].slice(0, 5)}</h4>
+                    <span>${getRelativeDate(d.data_wizyty)}</span>
+                </div>
+                <div class="name">
+                    <h4>${d.lekarz.imie} ${d.lekarz.nazwisko}</h4>
+                    <p>${d.lekarz.specjalizacja}</p>
+                </div>
+                <button class="danger">
+                    Odwołaj
+                </button>
             </div>
-            <p>Dostępny w piątek</p>
-            <button onclick="openAppointmentModal(${d.id})">Umów wizytę</button>
-        </div>
-    `).join(''));
+        `)
+        .join('')
+}
+
+async function displayDoctors() {
+    const data = await Lekarz.list()
+    doctorListDiv.innerHTML = data
+        .map(d => `
+            <div class="doctor">
+                <div class="name">
+                    <h3>${d.imie} ${d.nazwisko}</h3>
+                    <p>${d.specjalizacja}</p>
+                </div>
+                <p>Dostępny w piątek</p>
+                <button onclick="openAppointmentModal(${d.id})">Umów wizytę</button>
+            </div>
+        `)
+        .join('')
+}
+
+displayAppointments();
+displayDoctors();

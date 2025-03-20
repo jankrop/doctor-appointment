@@ -18,6 +18,7 @@ class LekarzViewSet(
 
 class WizytaViewSet(
     mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet

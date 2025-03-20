@@ -20,12 +20,18 @@
         </form>
     </header>
     <main>
-        <div id="doctor-list">
-            Ładowanie...
-        </div>
-        <br>
-        <div class="calendar">
-        </div>
+        <section>
+            <h3>Dostępni lekarze</h3>
+            <div id="doctor-list">
+                Ładowanie...
+            </div>
+        </section>
+        <aside>
+            <h3>Moje wizyty</h3>
+            <div id="appointment-list">
+
+            </div>
+        </aside>
     </main>
     <footer>
         2025 Jan Kropiwnicki
@@ -43,8 +49,6 @@
         </div>
     </div>
 
-    <script src="{% static 'main.js' %}"></script>
-
-<!-- {% csrf_token %}-->
+    <script type="module" src="{% static 'main.js' %}"></script>
 </body>
 </html>

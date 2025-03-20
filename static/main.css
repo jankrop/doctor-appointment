@@ -22,8 +22,16 @@ button {
     font-size: 1rem;
 }
 
+button.danger {
+    background-color: #f33;
+}
+
 button:hover {
     background-color: #09e;
+}
+
+button.danger:hover {
+    background-color: #e22;
 }
 
 input, select {
@@ -98,6 +106,9 @@ body > header, body > main, footer {
     width: 100%;
     max-width: 800px;
     margin: auto;
+}
+
+body > header, body > footer {
     padding: 10px 20px;
 }
 
@@ -115,13 +126,33 @@ header h1 {
 }
 
 body > main {
+    max-width: 840px;
     background-color: white;
     margin: auto;
-    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding: 10px 0;
+}
+
+body > main h3 {
+    margin-bottom: 10px;
+}
+
+section, aside {
+    padding: 0 20px;
+}
+
+#doctor-list {
     flex: 1;
 }
 
-.doctor {
+aside {
+    width: 300px;
+    border-left: 1px solid #aaa;
+}
+
+.doctor, .appointment {
     padding: 10px;
     box-shadow: 0 4px 10px #ccc;
     border-radius: 5px;
@@ -129,10 +160,10 @@ body > main {
     align-items: center;
     gap: 10px;
     max-width: 600px;
-    margin: auto;
+    margin: auto auto 20px;
 }
 
-.doctor .name {
+.doctor .name, .appointment .name {
     flex: 1;
 }
 
