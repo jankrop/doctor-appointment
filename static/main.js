@@ -158,7 +158,7 @@ function getRelativeDate(date, accusative) {
     }
 
     date.setDate(date.getDate() + 7)  // Moving the date back
-    return date.getDate().toString().padStart(2, '0') + '.' + date.getMonth().toString().padStart(2, '0')
+    return date.getDate().toString().padStart(2, '0') + '.' + (date.getMonth() + 1).toString().padStart(2, '0')
 }
 
 const dialog = document.querySelector('#dialog');
@@ -241,8 +241,11 @@ async function submitAppointment(doctorId) {
 
 async function displayAppointments() {
     const data = await Wizyta.list()
+    const filteredData = data.filter(
+        a => a.status === 0 && new Date(a.data_wizyty) > new Date()
+    )
 
-    appointmentListDiv.innerHTML = data
+    appointmentListDiv.innerHTML = filteredData
         .sort((a, b) => new Date(a.data_wizyty) - new Date(b.data_wizyty))
         .map(d => `
             <div class="appointment">
@@ -271,7 +274,7 @@ async function displayDoctors() {
                     <h3>${doctor.imie} ${doctor.nazwisko}</h3>
                     <p>${doctor.specjalizacja}</p>
                 </div>
-                <p>Dostępny ${getRelativeDate(getFirstAvailableDate(doctor).toISOString())}</p>
+                <p>Dostępny/a ${getRelativeDate(getFirstAvailableDate(doctor).toISOString())}</p>
                 <button onclick="openAppointmentModal(${doctor.id})">Umów wizytę</button>
             </div>
         `)
