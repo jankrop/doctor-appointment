@@ -171,6 +171,8 @@ const dialogCloseButton = document.querySelector('#dialog header button');
 const dialogTitle = document.querySelector('#dialog header h3');
 const dialogMain = document.querySelector('#dialog main');
 
+const searchInput = document.querySelector('#search');
+
 const doctorListDiv = document.querySelector('#doctor-list');
 const appointmentListDiv = document.querySelector('#appointment-list');
 
@@ -265,9 +267,13 @@ async function displayAppointments() {
         .join('')
 }
 
-async function displayDoctors() {
-    const data = await Lekarz.list()
+function displayDoctors(data) {
     doctorListDiv.innerHTML = data
+        .sort((a, b) => {
+            if (a.nazwisko < b.nazwisko) return -1
+            if (a.nazwisko > b.nazwisko) return 1
+            return 0
+        })
         .map(doctor => `
             <div class="doctor">
                 <div class="name">
@@ -281,5 +287,18 @@ async function displayDoctors() {
         .join('')
 }
 
+async function loadDoctors() {
+    const doctors = await Lekarz.list();
+    displayDoctors(doctors);
+
+    searchInput.onkeyup = () => {
+        displayDoctors(doctors.filter(
+            doctor =>
+                (doctor.imie + ' ' + doctor.nazwisko).toLowerCase().includes(searchInput.value.toLowerCase())
+                || doctor.specjalizacja.toLowerCase().includes(searchInput.value.toLowerCase())
+        ))
+    }
+}
+
+loadDoctors();
 displayAppointments();
-displayDoctors();
