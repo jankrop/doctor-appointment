@@ -135,6 +135,12 @@ body > main {
     padding: 10px 0;
 }
 
+section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 #doctor-list, #appointment-list {
     margin-top: 10px;
 }

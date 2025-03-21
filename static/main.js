@@ -4,21 +4,27 @@ class Lekarz {
         this.imie = imie
         this.nazwisko = nazwisko
         this.specjalizacja = specjalizacja
-        this.godzina_od = godzina_od
-        this.godzina_do = godzina_do
-        this.dates = dates
+        const dateFrom = new Date('1970-01-01T' + godzina_od)
+        this.godzina_od = dateFrom.getHours() + dateFrom.getMinutes() / 60
+        const dateTo = new Date('1970-01-01T' + godzina_do)
+        this.godzina_do = dateTo.getHours() + dateFrom.getMinutes() / 60
+        this.dates = dates.map(date => new Date(date))
     }
 
     static async list() {
         const response = await fetch('/api/lekarz/');
-        const data = await response.json()
-        return data.map(d => new Lekarz(d.id, d.imie, d.nazwisko, d.specjalizacja, d.godzina_od, d.godzina_do, d.dates));
+        const doctors = await response.json()
+        return doctors.map(doctor => new Lekarz(
+            doctor.id, doctor.imie, doctor.nazwisko, doctor.specjalizacja, doctor.godzina_od, doctor.godzina_do, doctor.dates
+        ));
     }
 
     static async retrieve(id) {
         const response = await fetch(`/api/lekarz/${id}/`)
-        const data = await response.json()
-        return new Lekarz(data.id, data.imie, data.nazwisko, data.specjalizacja, data.godzina_od, data.godzina_do, data.dates);
+        const doctor = await response.json()
+        return new Lekarz(
+            doctor.id, doctor.imie, doctor.nazwisko, doctor.specjalizacja, doctor.godzina_od, doctor.godzina_do, doctor.dates
+        );
     }
 }
 
@@ -27,22 +33,22 @@ class Wizyta {
         this.id = id;
         this.pacjent = pacjent;
         this.lekarz = lekarz;
-        this.data_wizyty = data_wizyty;
+        this.data_wizyty = new Date(data_wizyty);
         this.status = status;
     }
 
     static async list() {
         const response = await fetch('/api/wizyta/');
-        const data = await response.json();
-        return await Promise.all(
-            data.map(async d => new Wizyta(d.id, d.pacjent, await Lekarz.retrieve(d.lekarz), d.data_wizyty, d.status))
+        const appointments = await response.json();
+        return Promise.all(appointments.map(
+            async a => new Wizyta(a.id, a.pacjent, await Lekarz.retrieve(a.lekarz), a.data_wizyty, a.status))
         );
     }
 
     static async retrieve(id) {
         const response = await fetch(`/api/wizyta/${id}/`)
-        const data = await response.json()
-        return new Wizyta(data.id, data.pacjent, await Lekarz.retrieve(data.lekarz), data.data_wizyty, data.status);
+        const a = await response.json()
+        return new Wizyta(a.id, a.pacjent, await Lekarz.retrieve(a.lekarz), a.data_wizyty, a.status);
     }
 
     static async create(lekarz, data_wizyty) {
@@ -92,42 +98,46 @@ function getCookie(name) {  // For the love of Zeus why is this not a built-in f
     return cookieValue;
 }
 
-function hourToFloat(hour) {
-    return parseInt(hour.split(':')[0]) + hour.split(':')[1] / 60;
+function compareDates(date1, date2) {
+    date1.setHours(0, 0, 0, 0)
+    date2.setHours(0, 0, 0, 0)
+
+    return Math.ceil((date1 - date2) / (1000 * 60 * 60 * 24));
 }
 
-function floatToHour(hour) {
-    return hour.toFixed(2).split('.')[0] + ':' + Math.round(hour.toFixed(2).split('.')[1] * 0.6).toString().padStart(2, '0');
-}
-
-function getHoursForDay(appointments, hourFrom, hourTo, day) {
-    hourFrom = hourToFloat(hourFrom);
-
-    if (day.split('T')[0] === new Date().toISOString().split('T')[0]) {
-        hourFrom = new Date().getHours() +  new Date().getMinutes() / 60;
-        hourFrom = Math.ceil(hourFrom * 4) / 4
+function getHoursForDay(doctor, day) {
+    let dateFrom;
+    if (compareDates(day, new Date()) === 0) {
+        dateFrom = new Date()
+    } else {
+        dateFrom = new Date(day.getTime());
+        dateFrom.setHours(Math.floor(doctor.godzina_od), Math.floor(doctor.godzina_od * 60 % 60))
     }
 
-    hourTo = hourToFloat(hourTo);
+    let dateTo = new Date(day.getTime());
+    dateTo.setHours(Math.floor(doctor.godzina_do), Math.floor(doctor.godzina_do * 60 % 60))
 
-    const hours = [];
-    const appointmentsToday = appointments
-        .filter(a => a.split('T')[0] === day.split('T')[0])
-        .map(a => hourToFloat(a.split('T')[1]));
-    for (let i = hourFrom; i < hourTo; i += 0.25) {
-        if (new Date(day.split('T')[0]).getDate() === 28) {
-            console.log(i, appointmentsToday);
-        }
-        hours.push({hour: floatToHour(i), busy: appointmentsToday.includes(i)});
+    if (dateFrom > dateTo) {
+        return []
     }
-    return hours;
+
+    const appointmentsOnDay = doctor.dates.filter(d => compareDates(d, day) === 0)
+    const hours = []
+
+    for (let date = dateFrom; date < dateTo; date.setHours(date.getHours(), date.getMinutes() + 15)) {
+        hours.push({hour: date, busy: appointmentsOnDay.some(
+            a => a.data_wizyty.getHours() === date.getHours() && a.data_wizyty.getMinutes() === date.getMinutes()
+        )})
+    }
+
+    return hours
 }
 
 function getFirstAvailableDate(doctor) {
     const day = new Date();
     let firstDate = null;
     while (true) {
-        if (getHoursForDay(doctor.dates, doctor.godzina_od, doctor.godzina_do, day.toISOString()).length !== 0) {
+        if (getHoursForDay(doctor, day).length !== 0) {
             firstDate = day
             break
         }
@@ -141,24 +151,19 @@ function getRelativeDate(date, accusative) {
         ? ['w niedzielę', 'w poniedziałek', 'w wtorek', 'w środę', 'w czwartek', 'w piątek', 'w sobotę']
         : ['nd.', 'pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.'];
 
-    if (date.split('T')[0] === new Date().toISOString().split('T')[0]) {
+    if (compareDates(date, new Date()) === 0) {
         return 'dzisiaj'
     }
 
-    date = new Date(date);
-    date.setDate(date.getDate() - 1);  // Getting the date 1 day before to see if the date is tomorrow
-    if (date.toISOString().split('T')[0] === new Date().toISOString().split('T')[0]) {
+    if (compareDates(date, new Date()) === 1 && date > new Date()) {
         return 'jutro'
     }
 
-    date.setDate(date.getDate() - 6);  // Getting the date a total 7 days before to see if the date is in a week
-    if (date.toISOString().split('T')[0] === new Date().toISOString().split('T')[0]) {
-        date.setDate(date.getDate() + 7)  // Moving the date back
+    if (compareDates(date, new Date()) <= 7 && date > new Date()) {
         return WEEKDAYS[date.getDay()]
     }
 
-    date.setDate(date.getDate() + 7)  // Moving the date back
-    return date.getDate().toString().padStart(2, '0') + '.' + (date.getMonth() + 1).toString().padStart(2, '0')
+    return date.getDate().toString().padStart(2, '0') + '.' + date.getMonth().toString().padStart(2, '0')
 }
 
 const dialog = document.querySelector('#dialog');
@@ -174,8 +179,6 @@ dialogCloseButton.onclick = () => dialog.classList.remove('shown');
 function setupCalendar(data) {
     const calendar = document.querySelector('#calendar');
     const timeSelect = document.querySelector('#time-select');
-
-    console.log('first date for', data.imie, data.nazwisko, getFirstAvailableDate(data))
 
     flatpickr(calendar, {
         locale: 'pl',
@@ -195,17 +198,14 @@ function setupCalendar(data) {
     })
 
     calendar.onchange = () => {
-        console.log(data.dates);
         const date = calendar.value;
         const hours = getHoursForDay(data.dates, data.godzina_od, data.godzina_do, date);
-        console.log(hours);
         timeSelect.innerHTML = hours.map(h => `<option ${h.busy ? 'disabled' : ''}>${h.hour}</option>`).join('');
     }
 }
 
 async function openAppointmentModal(id) {
     const doctor = await Lekarz.retrieve(id)
-    console.log(doctor)
     dialogTitle.textContent = doctor.imie + ' ' + doctor.nazwisko
     dialogMain.innerHTML = `
         <div class="appointment-form">
@@ -250,7 +250,7 @@ async function displayAppointments() {
         .map(d => `
             <div class="appointment">
                 <div class="date">
-                    <h4>${d.data_wizyty.split('T')[1].slice(0, 5)}</h4>
+                    <h4>${d.data_wizyty.getHours().toString().padStart(2, '0')}:${d.data_wizyty.getMinutes().toString().padStart(2, '0')}</h4>
                     <span>${getRelativeDate(d.data_wizyty, false)}</span>
                 </div>
                 <div class="name">
@@ -274,7 +274,7 @@ async function displayDoctors() {
                     <h3>${doctor.imie} ${doctor.nazwisko}</h3>
                     <p>${doctor.specjalizacja}</p>
                 </div>
-                <p>Dostępny/a ${getRelativeDate(getFirstAvailableDate(doctor).toISOString())}</p>
+                <p>Dostępny/a ${getRelativeDate(getFirstAvailableDate(doctor))}</p>
                 <button onclick="openAppointmentModal(${doctor.id})">Umów wizytę</button>
             </div>
         `)
