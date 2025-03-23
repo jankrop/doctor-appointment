@@ -139,6 +139,7 @@ section {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 55%;
 }
 
 #doctor-list, #appointment-list {
@@ -165,7 +166,6 @@ aside {
     display: flex;
     align-items: center;
     gap: 10px;
-    max-width: 600px;
     margin: auto auto 20px;
 }
 

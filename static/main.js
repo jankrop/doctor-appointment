@@ -99,6 +99,9 @@ function getCookie(name) {  // For the love of Zeus why is this not a built-in f
 }
 
 function compareDates(date1, date2) {
+    date1 = new Date(date1.getTime())
+    date2 = new Date(date2.getTime())
+
     date1.setHours(0, 0, 0, 0)
     date2.setHours(0, 0, 0, 0)
 
@@ -121,14 +124,19 @@ function getHoursForDay(doctor, day) {
         return []
     }
 
+    console.log(doctor.dates)
+
     const appointmentsOnDay = doctor.dates.filter(d => compareDates(d, day) === 0)
     const hours = []
 
     for (let date = dateFrom; date < dateTo; date.setHours(date.getHours(), date.getMinutes() + 15)) {
-        hours.push({hour: date, busy: appointmentsOnDay.some(
-            a => a.data_wizyty.getHours() === date.getHours() && a.data_wizyty.getMinutes() === date.getMinutes()
+        // console.log(date.getHours(), date.getMinutes())
+        hours.push({hour: new Date(date.getTime()), busy: appointmentsOnDay.some(
+            a => a.getHours() === date.getHours() && a.getMinutes() === date.getMinutes()
         )})
     }
+
+    console.log(doctor.nazwisko, day.getDate(), hours, appointmentsOnDay)
 
     return hours
 }
@@ -163,7 +171,7 @@ function getRelativeDate(date, accusative) {
         return WEEKDAYS[date.getDay()]
     }
 
-    return date.getDate().toString().padStart(2, '0') + '.' + date.getMonth().toString().padStart(2, '0')
+    return date.getDate().toString().padStart(2, '0') + '.' + (date.getMonth() + 1).toString().padStart(2, '0')
 }
 
 const dialog = document.querySelector('#dialog');
@@ -193,16 +201,18 @@ function setupCalendar(data) {
                 const is_weekend = date.getDay() === 0 || date.getDay() === 6;
                 const is_past = date.getTime() < firstAvailableDate.getTime();
                 date.setMonth(date.getMonth(), date.getDate() + 1)
-                const is_busy = !getHoursForDay(data.dates, data.godzina_od, data.godzina_do, date.toISOString())
+                const is_busy = !getHoursForDay(data, date)
                 return is_weekend || is_past || is_busy;
             }
         ]
     })
 
     calendar.onchange = () => {
-        const date = calendar.value;
-        const hours = getHoursForDay(data.dates, data.godzina_od, data.godzina_do, date);
-        timeSelect.innerHTML = hours.map(h => `<option ${h.busy ? 'disabled' : ''}>${h.hour}</option>`).join('');
+        const date = new Date(calendar.value);
+        const hours = getHoursForDay(data, date);
+        timeSelect.innerHTML = hours.map(h => `
+            <option ${h.busy ? 'disabled' : ''}>${h.hour.getHours().toString().padStart(2, '0')}:${h.hour.getMinutes().toString().padStart(2, '0')}</option>
+        `).join('');
     }
 }
 
@@ -234,11 +244,34 @@ async function submitAppointment(doctorId) {
     const date = calendar.value;
     const hour = timeSelect.value;
 
-    await Wizyta.create(doctorId, date + 'T' + hour.padStart(5, '0') + ':00')
+    const tzOffset = -new Date(date).getTimezoneOffset()
+    const dateString = date + 'T' + hour.padStart(5, '0') + ':00'
+        + (tzOffset < 0 ? '-' : '+') + Math.abs(Math.floor(tzOffset / 60)).toString().padStart(2, '0')
+        + ':' + Math.abs(tzOffset % 60).toString().padStart(2, '0')
+
+    console.log(dateString)
+
+    await Wizyta.create(doctorId, dateString)
 
     await displayAppointments()
 
     dialog.classList.remove('shown')
+}
+
+async function openCancelModal(id) {
+    const appointment = await Wizyta.retrieve(id)
+    dialogTitle.textContent = 'Odwołanie wizyty'
+    dialogMain.innerHTML = `
+        <p>
+            Czy na pewno chcesz odwołać wizytę ${getRelativeDate(appointment.data_wizyty)} o 
+            ${appointment.data_wizyty.getHours().toString().padStart(2, '0')}:${appointment.data_wizyty.getMinutes().toString().padStart(2, '0')}
+            u lekarza ${appointment.lekarz.imie} ${appointment.lekarz.nazwisko}?
+        </p>
+        <button class="danger">Tak</button>
+        <button>Nie</button>
+    `
+
+    dialog.classList.add('shown')
 }
 
 async function displayAppointments() {
