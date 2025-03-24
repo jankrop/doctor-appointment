@@ -13,7 +13,7 @@
 <body>
     <header>
         <h1>Przystojni lekarze w twojej okolicy</h1>
-        <p>Witaj, Jan</p>
+        <p>Witaj, {{ user.username }}</p>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
             <button>Wyloguj się</button>
@@ -35,7 +35,7 @@
         </aside>
     </main>
     <footer>
-        2025 Jan Kropiwnicki
+        Made with &#10084;&#65039; and &#9749; by Jan Kropiwnicki
     </footer>
 
     <div id="dialog">

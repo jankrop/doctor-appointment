@@ -273,9 +273,9 @@ async function openCancelModal(id) {
     dialogTitle.textContent = 'Odwołanie wizyty'
     dialogMain.innerHTML = `
         <p>
-            Czy na pewno chcesz odwołać wizytę ${getRelativeDate(appointment.data_wizyty)} o 
-            ${appointment.data_wizyty.getHours().toString().padStart(2, '0')}:${appointment.data_wizyty.getMinutes().toString().padStart(2, '0')}
-            u lekarza ${appointment.lekarz.imie} ${appointment.lekarz.nazwisko}?
+            Czy na pewno chcesz odwołać wizytę <b>${getRelativeDate(appointment.data_wizyty, true)}</b> o 
+            <b>${appointment.data_wizyty.getHours().toString().padStart(2, '0')}:${appointment.data_wizyty.getMinutes().toString().padStart(2, '0')}</b>
+            u lekarza <b>${appointment.lekarz.imie} ${appointment.lekarz.nazwisko}</b>?
         </p>
         <button class="danger" onclick="cancelAppointment(${id})">Tak</button>
         <button onclick="dialog.classList.remove('shown')">Nie</button>
