@@ -1,4 +1,6 @@
 class Lekarz {
+    static cache = {}
+
     constructor(id, imie, nazwisko, specjalizacja, godzina_od, godzina_do, dates) {
         this.id = id
         this.imie = imie
@@ -12,19 +14,31 @@ class Lekarz {
     }
 
     static async list() {
+        console.log('Lekarz.list');
         const response = await fetch('/api/lekarz/');
         const doctors = await response.json()
-        return doctors.map(doctor => new Lekarz(
-            doctor.id, doctor.imie, doctor.nazwisko, doctor.specjalizacja, doctor.godzina_od, doctor.godzina_do, doctor.dates
-        ));
+        return doctors.map(doctor => {
+            const lekarz =  new Lekarz(
+                doctor.id, doctor.imie, doctor.nazwisko, doctor.specjalizacja, doctor.godzina_od, doctor.godzina_do, doctor.dates
+            )
+            this.cache[doctor.id] = lekarz
+            return lekarz
+        });
     }
 
     static async retrieve(id) {
+        if (id in this.cache) {
+            console.log('Lekarz.retrieve (from cache)')
+            return this.cache[id]
+        }
+        console.log('Lekarz.retrieve');
         const response = await fetch(`/api/lekarz/${id}/`)
         const doctor = await response.json()
-        return new Lekarz(
+        const doctorObject = new Lekarz(
             doctor.id, doctor.imie, doctor.nazwisko, doctor.specjalizacja, doctor.godzina_od, doctor.godzina_do, doctor.dates
         );
+        this.cache[id] = doctorObject
+        return doctorObject
     }
 }
 
@@ -38,6 +52,7 @@ class Wizyta {
     }
 
     static async list() {
+        console.log('Wizyta.list');
         const response = await fetch('/api/wizyta/');
         const appointments = await response.json();
         return Promise.all(appointments.map(
@@ -46,12 +61,14 @@ class Wizyta {
     }
 
     static async retrieve(id) {
+        console.log('Lekarz.retrieve');
         const response = await fetch(`/api/wizyta/${id}/`)
         const a = await response.json()
         return new Wizyta(a.id, a.pacjent, await Lekarz.retrieve(a.lekarz), a.data_wizyty, a.status);
     }
 
     static async create(lekarz, data_wizyty) {
+        console.log('Lekarz.create');
         const response = await fetch('/api/wizyta/', {
             method: 'POST',
             credentials: 'include',
@@ -124,19 +141,14 @@ function getHoursForDay(doctor, day) {
         return []
     }
 
-    console.log(doctor.dates)
-
     const appointmentsOnDay = doctor.dates.filter(d => compareDates(d, day) === 0)
     const hours = []
 
     for (let date = dateFrom; date < dateTo; date.setHours(date.getHours(), date.getMinutes() + 15)) {
-        // console.log(date.getHours(), date.getMinutes())
         hours.push({hour: new Date(date.getTime()), busy: appointmentsOnDay.some(
             a => a.getHours() === date.getHours() && a.getMinutes() === date.getMinutes()
         )})
     }
-
-    console.log(doctor.nazwisko, day.getDate(), hours, appointmentsOnDay)
 
     return hours
 }
@@ -248,8 +260,6 @@ async function submitAppointment(doctorId) {
     const dateString = date + 'T' + hour.padStart(5, '0') + ':00'
         + (tzOffset < 0 ? '-' : '+') + Math.abs(Math.floor(tzOffset / 60)).toString().padStart(2, '0')
         + ':' + Math.abs(tzOffset % 60).toString().padStart(2, '0')
-
-    console.log(dateString)
 
     await Wizyta.create(doctorId, dateString)
 
