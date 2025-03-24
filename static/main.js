@@ -31,7 +31,7 @@ class Lekarz {
             console.log('Lekarz.retrieve (from cache)')
             return this.cache[id]
         }
-        console.log('Lekarz.retrieve');
+        console.log('Lekarz.retrieve', this.cache);
         const response = await fetch(`/api/lekarz/${id}/`)
         const doctor = await response.json()
         const doctorObject = new Lekarz(
@@ -277,11 +277,19 @@ async function openCancelModal(id) {
             ${appointment.data_wizyty.getHours().toString().padStart(2, '0')}:${appointment.data_wizyty.getMinutes().toString().padStart(2, '0')}
             u lekarza ${appointment.lekarz.imie} ${appointment.lekarz.nazwisko}?
         </p>
-        <button class="danger">Tak</button>
-        <button>Nie</button>
+        <button class="danger" onclick="cancelAppointment(${id})">Tak</button>
+        <button onclick="dialog.classList.remove('shown')">Nie</button>
     `
 
     dialog.classList.add('shown')
+}
+
+async function cancelAppointment(id) {
+    await Wizyta.delete(id);
+
+    await displayAppointments();
+
+    dialog.classList.remove('shown')
 }
 
 async function displayAppointments() {
@@ -302,7 +310,7 @@ async function displayAppointments() {
                     <h4>${d.lekarz.imie} ${d.lekarz.nazwisko}</h4>
                     <p>${d.lekarz.specjalizacja}</p>
                 </div>
-                <button class="danger">
+                <button class="danger" onclick="openCancelModal(${d.id})">
                     Odwołaj
                 </button>
             </div>
@@ -330,10 +338,7 @@ function displayDoctors(data) {
         .join('')
 }
 
-async function loadDoctors() {
-    const doctors = await Lekarz.list();
-    displayDoctors(doctors);
-
+function prepareDoctorSearch(doctors) {
     searchInput.onkeyup = () => {
         displayDoctors(doctors.filter(
             doctor =>
@@ -343,5 +348,11 @@ async function loadDoctors() {
     }
 }
 
-loadDoctors();
-displayAppointments();
+async function main() {
+    const doctors = await Lekarz.list();
+    displayDoctors(doctors);
+    prepareDoctorSearch(doctors)
+    await displayAppointments();
+}
+
+main()
