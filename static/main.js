@@ -298,6 +298,11 @@ async function displayAppointments() {
         a => a.status === 0 && new Date(a.data_wizyty) > new Date()
     )
 
+    if (filteredData.length === 0) {
+        appointmentListDiv.innerHTML = 'Brak wizyt'
+        return
+    }
+
     appointmentListDiv.innerHTML = filteredData
         .sort((a, b) => new Date(a.data_wizyty) - new Date(b.data_wizyty))
         .map(d => `
@@ -319,6 +324,11 @@ async function displayAppointments() {
 }
 
 function displayDoctors(data) {
+    if (data.length === 0) {
+        doctorListDiv.innerHTML = 'Brak lekarzy'
+        return
+    }
+
     doctorListDiv.innerHTML = data
         .sort((a, b) => {
             if (a.nazwisko < b.nazwisko) return -1

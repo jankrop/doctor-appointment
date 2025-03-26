@@ -24,7 +24,9 @@ class WizytaViewSet(
     viewsets.GenericViewSet
 ):
     def get_queryset(self):
-        return self.request.user.pacjent.wizyta_set.all()
+        if hasattr(self.request.user, 'pacjent'):
+            return self.request.user.pacjent.wizyta_set.all()
+        return []
 
     serializer_class = WizytaSerializer
     permission_classes = IsPacjent, permissions.IsAuthenticated
