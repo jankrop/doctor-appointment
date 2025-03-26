@@ -1,0 +1,304 @@
+{
+  "openapi": "3.0.4",
+  "swagger": "2.0",
+  "info": {
+    "title": "API do zarządzania wizytami lekarskimi",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:8000/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "lekarz",
+      "description": "Operacje na lekarzach"
+    },
+    {
+      "name": "wizyta",
+      "description": "Operacje na wizytach"
+    }
+  ],
+  "paths": {
+    "/api/lekarz/": {
+      "get": {
+        "tags": [
+          "lekarz"
+        ],
+        "summary": "Zwraca listę wszystkich lekarzy.",
+        "operationId": "listLekarz",
+        "responses": {
+          "200": {
+            "description": "Operacja zakończona sukcesem",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Lekarz"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lekarz/{lekarzId}": {
+      "get": {
+        "tags": [
+          "lekarz"
+        ],
+        "summary": "Zwraca lekarza o podanym ID.",
+        "operationId": "retrieveLekarz",
+        "parameters": [
+          {
+            "name": "lekarzId",
+            "in": "path",
+            "description": "ID lekarza, który ma być zwrócony",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operacja zakończona sukcesem",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lekarz"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wizyta/": {
+      "get": {
+        "tags": [
+          "wizyta"
+        ],
+        "summary": "Zwraca listę wszystkich wizyt zalogowanego użytkownika.",
+        "operationId": "listWizyta",
+        "responses": {
+          "200": {
+            "description": "Operacja zakończona sukcesem",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Wizyta"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "wizyta"
+        ],
+        "summary": "Tworzy nową wizytę",
+        "operationId": "createWizyta",
+        "parameters": [
+          {
+            "name": "X-CSRFToken",
+            "in": "header",
+            "description": "Token CSRF",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "lekarzId",
+            "in": "query",
+            "description": "ID lekarza, u którego odbędzie się wizyta",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "dataWizyty",
+            "in": "query",
+            "description": "Data wizyty w formacie ISO",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "2000-01-01T12:00:00+01:00"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Wizyta została utworzona",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wizyta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wizyta/{wizytaId}/": {
+      "get": {
+        "tags": [
+          "wizyta"
+        ],
+        "summary": "Zwraca wizytę o podanym ID.",
+        "operationId": "retrieveWizyta",
+        "parameters": [
+          {
+            "name": "wizytaId",
+            "in": "path",
+            "description": "ID wizyty, która ma być zwrócona",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operacja zakończona sukcesem",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wizyta"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "wizyta"
+        ],
+        "summary": "Zmienia status wizyty na odwołaną.",
+        "description": "Nie usuwa wizyty z bazy danych.",
+        "operationId": "deleteWizyta",
+        "parameters": [
+          {
+            "name": "X-CSRFToken",
+            "in": "header",
+            "description": "Token CSRF",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "wizytaId",
+            "in": "path",
+            "description": "ID wizyty, która ma być odwołana",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operacja zakończona sukcesem",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Wizyta status set to cancelled"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Lekarz": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 10
+          },
+          "imie": {
+            "type": "string",
+            "example": "Jan"
+          },
+          "nazwisko": {
+            "type": "string",
+            "example": "Kowalski"
+          },
+          "specjalizacja": {
+            "type": "string",
+            "example": "Kardiolog"
+          },
+          "godzina_od": {
+            "type": "string",
+            "example": "07:30:00"
+          },
+          "godzina_do": {
+            "type": "string",
+            "example": "15:30:00"
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "2000-01-01T12:00:00+01:00"
+            }
+          }
+        }
+      },
+      "Wizyta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 10
+          },
+          "dataWizyty": {
+            "type": "string",
+            "example": "2000-01-01T12:00:00+01:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "0: zaplanowana, 1: odwołana, 2: zakończona",
+            "example": 0
+          },
+          "pacjent": {
+            "type": "integer",
+            "example": 8
+          },
+          "lekarz": {
+            "type": "integer",
+            "example": 4
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ]
+}
