@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, mixins, viewsets, status, views
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -20,7 +21,7 @@ class WizytaViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
+    # mixins.UpdateModelMixin,
     viewsets.GenericViewSet
 ):
     def get_queryset(self):
@@ -34,6 +35,7 @@ class WizytaViewSet(
     def perform_create(self, serializer):
         serializer.save(pacjent=self.request.user.pacjent)
 
+    @extend_schema(description="Sets status to canceled, does not delete the record.")
     def destroy(self, request, *args, **kwargs):
         wizyta = self.get_object()
         wizyta.status = 1  # Update status to 'odwołana'
