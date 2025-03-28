@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: 0.0.0
+paths:
+  /api/lekarz/:
+    get:
+      operationId: lekarz_list
+      tags:
+      - lekarz
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lekarz'
+          description: ''
+  /api/lekarz/{id}/:
+    get:
+      operationId: lekarz_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this lekarz.
+        required: true
+      tags:
+      - lekarz
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lekarz'
+          description: ''
+  /api/wizyta/:
+    get:
+      operationId: wizyta_list
+      tags:
+      - wizyta
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Wizyta'
+          description: ''
+    post:
+      operationId: wizyta_create
+      tags:
+      - wizyta
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Wizyta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Wizyta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Wizyta'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wizyta'
+          description: ''
+  /api/wizyta/{id}/:
+    get:
+      operationId: wizyta_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - wizyta
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wizyta'
+          description: ''
+    put:
+      operationId: wizyta_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - wizyta
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Wizyta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Wizyta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Wizyta'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wizyta'
+          description: ''
+    patch:
+      operationId: wizyta_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - wizyta
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWizyta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWizyta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWizyta'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wizyta'
+          description: ''
+    delete:
+      operationId: wizyta_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - wizyta
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    Lekarz:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        dates:
+          type: string
+          readOnly: true
+        imie:
+          type: string
+          maxLength: 50
+        nazwisko:
+          type: string
+          maxLength: 50
+        specjalizacja:
+          type: string
+          maxLength: 100
+        godzina_od:
+          type: string
+          format: time
+        godzina_do:
+          type: string
+          format: time
+      required:
+      - dates
+      - godzina_do
+      - godzina_od
+      - id
+      - imie
+      - nazwisko
+      - specjalizacja
+    PatchedWizyta:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        data_wizyty:
+          type: string
+          format: date-time
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        pacjent:
+          type: integer
+          readOnly: true
+        lekarz:
+          type: integer
+    StatusEnum:
+      enum:
+      - 0
+      - 1
+      - 2
+      type: integer
+      description: |-
+        * `0` - zaplanowana
+        * `1` - odwołana
+        * `2` - zakończona
+    Wizyta:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        data_wizyty:
+          type: string
+          format: date-time
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        pacjent:
+          type: integer
+          readOnly: true
+        lekarz:
+          type: integer
+      required:
+      - data_wizyty
+      - id
+      - lekarz
+      - pacjent
+      - status
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
